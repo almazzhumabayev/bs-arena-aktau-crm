@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bs-arena-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bs_arena}
+      POSTGRES_USER: ${POSTGRES_USER:-bs_arena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bs_arena_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bs_arena} -d ${POSTGRES_DB:-bs_arena}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: bs-arena-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bs_arena}:${POSTGRES_PASSWORD:-bs_arena_password}@postgres:5432/${POSTGRES_DB:-bs_arena}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-development}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app/apps/api
+      - /app/node_modules
+      - /app/apps/api/node_modules
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: bs-arena-web
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:4000/api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./apps/web:/app/apps/web
+      - /app/node_modules
+      - /app/apps/web/node_modules
+
+volumes:
+  postgres-data:

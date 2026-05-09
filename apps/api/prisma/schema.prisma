@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  WON
+  LOST
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         Role          @default(MANAGER)
+  comments     LeadComment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Lead {
+  id        Int           @id @default(autoincrement())
+  name      String
+  phone     String
+  email     String?
+  message   String?
+  interest  String?
+  source    String?
+  status    LeadStatus    @default(NEW)
+  comments  LeadComment[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model LeadComment {
+  id        Int      @id @default(autoincrement())
+  body      String
+  leadId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([userId])
+}
+
+model Service {
+  id              Int            @id @default(autoincrement())
+  title           String
+  slug            String         @unique
+  description     String
+  priceLabel      String?
+  durationMinutes Int?
+  imageUrl        String?
+  active          Boolean        @default(true)
+  sortOrder       Int            @default(0)
+  scheduleItems   ScheduleItem[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Coach {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  role          String
+  bio           String
+  avatarUrl     String?
+  specialities  String[]
+  active        Boolean        @default(true)
+  sortOrder     Int            @default(0)
+  scheduleItems ScheduleItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Membership {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique
+  price       Decimal  @db.Decimal(10, 2)
+  period      String
+  description String
+  benefits    String[]
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ScheduleItem {
+  id        Int      @id @default(autoincrement())
+  title     String
+  area      String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  capacity  Int?
+  active    Boolean  @default(true)
+  coachId   Int?
+  serviceId Int?
+  coach     Coach?   @relation(fields: [coachId], references: [id], onDelete: SetNull)
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dayOfWeek])
+  @@index([coachId])
+  @@index([serviceId])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String
+  startsAt    DateTime
+  endsAt      DateTime?
+  location    String
+  imageUrl    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,32 @@
+node_modules
+.next
+dist
+coverage
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+postgres-data
+
+# Environment files
+.env
+.env.*
+apps/**/.env
+apps/**/.env.*
+!.env.example
+!apps/**/.env.example
+
+# Dependencies and build output
+node_modules/
+.next/
+apps/**/.next/
+dist/
+build/
+coverage/
+*.log
+*.tsbuildinfo
+
+# Ignore accidental nested repo
+bs-arena-crm/
+
