@@ -1,92 +1,115 @@
-# BS ARENA
+# BS ARENA Aktau CRM
 
-Full-stack starter for a sports complex website and lead-management admin panel.
+Веб-сайт и CRM для спортивного комплекса BS ARENA в Актау.
 
-## Stack
+Проект включает публичный сайт на русском языке, административную CRM, NestJS API, PostgreSQL, Prisma ORM и Docker Compose для локальной разработки.
 
-- Next.js App Router, TypeScript, Tailwind CSS
-- NestJS API with modular feature modules
-- PostgreSQL, Prisma ORM, Prisma migrations
-- JWT auth, ADMIN and MANAGER role-based access control
-- Swagger documentation at `http://localhost:4000/api/docs`
-- Docker Compose for local development
+## Требования
 
-## Project Structure
+- Node.js 20+
+- npm
+- Docker Desktop
+- Git
+
+## Структура проекта
 
 ```text
 apps/
-  api/      NestJS backend, Prisma schema, migrations, seed data
-  web/      Next.js public website and admin panel
+  api/      NestJS API, Prisma schema, migrations, seed data
+  web/      Next.js App Router, публичный сайт и CRM
+docs/       статус проекта и заметки по деплою
 docker-compose.yml
 package.json
 ```
 
-## Local Setup
+## Быстрый старт локально
 
-1. Copy the environment template:
+1. Скопируйте переменные окружения:
 
 ```bash
 cp .env.example .env
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-2. Start Postgres:
+На Windows PowerShell можно использовать:
 
-```bash
-docker compose up -d postgres
+```powershell
+Copy-Item .env.example .env
+Copy-Item apps/api/.env.example apps/api/.env
+Copy-Item apps/web/.env.example apps/web/.env.local
 ```
 
-3. Run migrations and seed data:
-
-```bash
-docker compose run --rm api npm run prisma:migrate
-docker compose run --rm api npm run prisma:seed
-```
-
-4. Start the app:
-
-```bash
-docker compose up --build
-```
-
-## URLs
-
-- Public website: `http://localhost:3000`
-- Admin login: `http://localhost:3000/admin/login`
-- API: `http://localhost:4000/api`
-- Swagger: `http://localhost:4000/api/docs`
-- PostgreSQL: `localhost:5432`
-
-## Seed Users
-
-```text
-admin@bsarena.local / Admin123!      ADMIN
-manager@bsarena.local / Manager123!  MANAGER
-```
-
-## Main API Endpoints
-
-- `POST /api/auth/login`
-- `POST /api/leads`
-- `GET /api/leads`
-- `GET /api/leads/:id`
-- `PATCH /api/leads/:id/status`
-- `POST /api/leads/:id/comments`
-- `GET /api/services`
-- `GET /api/coaches`
-- `GET /api/memberships`
-- `GET /api/schedule`
-- `GET /api/events`
-
-Protected endpoints require `Authorization: Bearer <token>`.
-
-## Development Without Docker
-
-Install dependencies from the repo root, then run each app:
+2. Установите зависимости:
 
 ```bash
 npm install
-npm run dev:api
-npm run dev:web
 ```
 
-Use `apps/api/.env.example` and `apps/web/.env.example` if you prefer app-local env files.
+3. Запустите Docker Compose:
+
+```bash
+docker compose up --build -d
+```
+
+4. Выполните миграции Prisma:
+
+```bash
+docker compose exec -T api npx prisma migrate deploy
+```
+
+Для разработки, если нужно создать/применить dev-миграцию:
+
+```bash
+docker compose exec -T api npx prisma migrate dev
+```
+
+5. Заполните базу начальными русскими данными:
+
+```bash
+docker compose exec -T api npx prisma db seed
+```
+
+## Локальные URL
+
+- Сайт: `http://localhost:3000`
+- CRM: `http://localhost:3000/admin/login`
+- API docs / Swagger: `http://localhost:4000/docs`
+- Health check: `http://localhost:4000/api/health`
+- API base URL: `http://localhost:4000/api`
+
+## Доступ администратора по умолчанию
+
+```text
+Email: admin@bsarena.local
+Password: Admin123!
+```
+
+После переноса на production пароль администратора нужно обязательно заменить.
+
+## Основные команды
+
+```bash
+npm run dev
+npm run dev:web
+npm run dev:api
+npm run db:migrate
+npm run db:seed
+npm run typecheck
+```
+
+## Основные возможности
+
+- Публичный сайт BS ARENA на русском языке
+- Форма заявки на сайте
+- CRM вход по JWT
+- Управление заявками, статусами и комментариями
+- Управление услугами, абонементами, тренерами, расписанием и мероприятиями
+- Swagger документация API
+- PostgreSQL через Docker Compose
+- Prisma migrations и seed data
+
+## Документация
+
+- [Статус проекта](docs/PROJECT_STATUS.md)
+- [Заметки по деплою](docs/DEPLOYMENT_NOTES.md)
