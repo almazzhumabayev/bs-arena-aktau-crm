@@ -1,4 +1,5 @@
-const serverApiUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const serverApiUrl =
+  process.env.INTERNAL_API_URL ?? process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 const browserApiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
 function joinUrl(baseUrl: string, path: string) {

@@ -1,0 +1,65 @@
+name: bs-arena-server
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bs_arena}
+      POSTGRES_USER: ${POSTGRES_USER:-bs_arena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bs_arena_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bs_arena} -d ${POSTGRES_DB:-bs_arena}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile.server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bs_arena}:${POSTGRES_PASSWORD:-bs_arena_password}@postgres:5432/${POSTGRES_DB:-bs_arena}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-for-server-demo}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost}
+      PORT: 4000
+    expose:
+      - "4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.server
+      args:
+        NEXT_PUBLIC_API_URL: /api
+        INTERNAL_API_URL: ${INTERNAL_API_URL:-http://api:4000/api}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://api:4000/api}
+      API_URL: ${INTERNAL_API_URL:-http://api:4000/api}
+    expose:
+      - "3000"
+    depends_on:
+      - api
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - api
+
+volumes:
+  postgres-data:
