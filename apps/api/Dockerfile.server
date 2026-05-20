@@ -4,15 +4,16 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
+
 RUN npm ci --workspace @bs-arena/api
 
 COPY apps/api apps/api
+
 WORKDIR /app/apps/api
 
 RUN npm run prisma:generate
 RUN npm run build
 
-ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD ["sh", "-c", "npm run prisma:deploy && npm run start"]
+CMD ["sh", "-c", "npm run prisma:deploy && MAIN_FILE=$(find dist -type f -name main.js | head -n 1) && if [ -z \"$MAIN_FILE\" ]; then echo 'Cannot find built Nest main.js'; find dist -maxdepth 5 -type f; exit 1; fi && echo \"Starting API from $MAIN_FILE\" && node \"$MAIN_FILE\""]
